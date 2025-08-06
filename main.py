@@ -6,6 +6,8 @@ from telegram.ext import Application, CallbackQueryHandler, CommandHandler, Cont
 import os
 from dotenv import load_dotenv
 
+import json
+
 load_dotenv()
 
 TOKEN = os.getenv("TOKEN")
@@ -19,62 +21,124 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 
 logger = logging.getLogger(__name__)
 
+with open('user_info.json', 'r') as file:
+    user_info = json.load(file)
+
+with open('languages.json', 'r') as file:
+    languages = json.load(file)
+
+def get_translations(update, context) -> None:
+    user_id = str(update.message.from_user['id'])
+    language = user_info.get(user_id, "rus")
+    return languages[language]
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    translations = get_translations(update, context)
+
     """Sends a message with three inline buttons attached."""
     keyboard = [
         [
-            InlineKeyboardButton("Search literature", callback_data="1"),
+            InlineKeyboardButton(translations["buttons"]["search"], callback_data="search"),
         ],
         [
-            InlineKeyboardButton("Generate annotation", callback_data="2")
+            InlineKeyboardButton(translations["buttons"]["annotation"], callback_data="annotation")
         ],
         [
-            InlineKeyboardButton("Generate bibliography", callback_data="3")
+            InlineKeyboardButton(translations["buttons"]["bibliography"], callback_data="bibliography")
         ],
         [
-            InlineKeyboardButton("Check for plagiarism", callback_data="4")
+            InlineKeyboardButton(translations["buttons"]["plagiarism"], callback_data="plagiarism")
         ],
         [
-            InlineKeyboardButton("Generate annotation", callback_data="5")
+            InlineKeyboardButton(translations["buttons"]["analyze"], callback_data="analyze")
         ],
         [
-            InlineKeyboardButton("Analyse paper", callback_data="6")
-        ],
-        [
-            InlineKeyboardButton("Offer topic", callback_data="7")
+            InlineKeyboardButton(translations["buttons"]["offer"], callback_data="offer")
         ],
     ]
 
     reply_markup = InlineKeyboardMarkup(keyboard)
 
-    await update.message.reply_text("Please choose:", reply_markup=reply_markup)
+    await update.message.reply_text(translations["buttons"]["popup"], reply_markup=reply_markup)
 
+async def handle_search(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.callback_query.edit_message_text("search")
+
+async def handle_annotation(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.callback_query.edit_message_text("annotation")
+
+async def handle_bibliography(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.callback_query.edit_message_text("bibliography")
+    
+async def handle_plagiarism(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.callback_query.edit_message_text("plagiarism")
+
+async def handle_analyze(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.callback_query.edit_message_text("analyze")
+
+async def handle_offer(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.callback_query.edit_message_text("offering")
 
 async def button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Parses the CallbackQuery and updates the message text."""
     query = update.callback_query
 
-    # CallbackQueries need to be answered, even if no notification to the user is needed
-    # Some clients may have trouble otherwise. See https://core.telegram.org/bots/api#callbackquery
     await query.answer()
+    match query.data:
+        case "search":
+            await handle_search(update, context)
+        case "annotation":
+            await handle_annotation(update, context)
+        case "bibliography":
+            await handle_bibliography(update, context)
+        case "plagiarism":
+            await handle_plagiarism(update, context)
+        case "analyze":
+            await handle_analyze(update, context)
+        case "offer":
+            await handle_offer(update, context)
 
-    await query.edit_message_text(text=f"Selected option: {query.data}")
+async def change_language(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    translations = get_translations(update, context)
+    """Changes users ui language"""
 
+    keyboard = [
+        [
+            InlineKeyboardButton("Русский", callback_data="lang_rus"),
+        ],
+        [
+            InlineKeyboardButton("Қазақша", callback_data="lang_kaz")
+        ],
+        [
+            InlineKeyboardButton("English", callback_data="lang_eng")
+        ],
+    ]
 
-async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Displays info on how to use the bot."""
-    await update.message.reply_text("Use /start to test this bot.")
+    reply_markup = InlineKeyboardMarkup(keyboard)
 
+    await update.message.reply_text(translations["language"]["popup"], reply_markup=reply_markup)
+
+async def handle_change_language(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Parses the CallbackQuery and updates the message text."""
+    query = update.callback_query
+
+    await query.answer()
+    user_id = str(update.effective_user.id)
+    user_info[user_id] = query.data[-3:]
+    with open('user_info.json', 'w') as file:
+        json.dump(user_info, file, indent=4)
+    translations = languages[query.data[-3:]]
+    await query.edit_message_text(translations["language"]["done"])
 
 def main() -> None:
     """Run the bot."""
     # Create the Application and pass it your bot's token.
     application = Application.builder().token(TOKEN).build()
 
+    application.add_handler(CommandHandler("language", change_language))
+    application.add_handler(CallbackQueryHandler(handle_change_language, pattern = "^lang_"))
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CallbackQueryHandler(button))
-    application.add_handler(CommandHandler("help", help_command))
 
     # Run the bot until the user presses Ctrl-C
     application.run_polling(allowed_updates=Update.ALL_TYPES)

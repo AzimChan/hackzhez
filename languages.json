@@ -1,0 +1,50 @@
+{
+  "eng":
+  {
+    "buttons":{
+      "popup": "Please choose:",
+      "search": "Search literature",
+      "annotation": "Generate annotation",
+      "bibliography": "Generate bibliography",
+      "plagiarism": "Check for plagiarism",
+      "analyze": "Analyze paper",
+      "offer": "Offer topic"
+    },
+    "language": {
+      "popup": "Choose language",
+      "done": "Language succesfully changed"
+    }
+  },
+  "kaz":
+  {
+    "buttons":{
+      "popup": "Керегін танданыз:",
+      "search": "Ғылыми әдебиеттерді іздеу",
+      "annotation": "Аннотация құрау",
+      "bibliography": "Библиография құрау",
+      "plagiarism": "Плагиатқа тексеру",
+      "analyze": "Ғылыми жұмысты анализ жасау",
+      "offer": "Тақырып ұсыныс беру"
+    },
+    "language": {
+      "popup": "Тілді таңданыз"
+      "done": "Боттың тілі сәтті ауысты"
+    }
+  },
+  "rus":
+  {
+    "buttons":{
+      "popup": "Выберите вариант:",
+      "search": "Искать научную литературу",
+      "annotation": "Сгенерировать аннотацию",
+      "bibliography": "Сгенерировать библиографию",
+      "plagiarism": "Проверить на плагиаризм",
+      "analyze": "Анализировать научную работу",
+      "offer": "Предложить тему"
+    },
+    "language": {
+      "popup": "Выберите язык"
+      "done": "Язык успешно сменен"
+    }
+  }
+}
